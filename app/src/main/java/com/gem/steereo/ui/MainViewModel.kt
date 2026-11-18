@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
@@ -55,6 +56,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val player = PlayerConnection(app)
 
     val nowPlaying: StateFlow<NowPlaying?> = player.nowPlaying
+    val currentUri: StateFlow<String?> = nowPlaying
+        .map { it?.mediaId }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val isPlaying: StateFlow<Boolean> = player.isPlaying
     val hasPrevious: StateFlow<Boolean> = player.hasPrevious
     val hasNext: StateFlow<Boolean> = player.hasNext
@@ -141,6 +145,26 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+
+    val searchQuery = MutableStateFlow("")
+
+    fun onSearchChange(q: String) {
+        searchQuery.value = q
+    }
+
+    val filteredTracks: StateFlow<List<TrackEntity>> =
+        combine(tracks, searchQuery.debounce(150)) { list, q ->
+            val query = q.trim()
+            if (query.isBlank()) list else list.filter { track ->
+                track.title.contains(query, ignoreCase = true) ||
+                    track.artist?.contains(query, ignoreCase = true) == true ||
+                    track.album?.contains(query, ignoreCase = true) == true
+            }
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptyList()
+        )
 
     val folders: StateFlow<List<FolderItem>> = repository.tracks.map { list ->
         list.groupBy { it.relativeDir }
@@ -229,6 +253,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun togglePlayPause() = player.togglePlayPause()
     fun next() = player.next()
     fun previous() = player.previous()
+    fun seekTo(ms: Long) = player.seekTo(ms)
 
     fun onVolumeChange(v: Float) {
         val clamped = v.coerceIn(0f, 1f)

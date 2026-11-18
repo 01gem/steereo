@@ -53,6 +53,7 @@ fun PlaylistsTab(
     onRename: (Long, String) -> Unit,
     onDelete: (Long) -> Unit,
     onRemoveTrack: (Long, String) -> Unit,
+    currentUri: String?,
     modifier: Modifier = Modifier
 ) {
     var selectedId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -190,7 +191,8 @@ fun PlaylistsTab(
                             TrackRow(
                                 track = track,
                                 onClick = { onPlay(playlistTracks, index) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                isCurrent = track.documentUri == currentUri
                             )
                             IconButton(onClick = { onRemoveTrack(selectedId!!, track.documentUri) }) {
                                 Icon(

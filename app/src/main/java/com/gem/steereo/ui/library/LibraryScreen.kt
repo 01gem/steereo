@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gem.steereo.data.db.TrackEntity
 import com.gem.steereo.ui.MainViewModel
 import com.gem.steereo.ui.player.MiniPlayer
+import com.gem.steereo.ui.player.NowPlayingSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +59,9 @@ fun LibraryScreen(
     modifier: Modifier = Modifier
 ) {
     val tracks by viewModel.tracks.collectAsStateWithLifecycle()
+    val filteredTracks by viewModel.filteredTracks.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val currentUri by viewModel.currentUri.collectAsStateWithLifecycle()
     val folders by viewModel.folders.collectAsStateWithLifecycle()
     val rootLabel by viewModel.rootLabel.collectAsStateWithLifecycle()
     val scanState by viewModel.scanState.collectAsStateWithLifecycle()
@@ -67,7 +71,6 @@ fun LibraryScreen(
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val hasPrevious by viewModel.hasPrevious.collectAsStateWithLifecycle()
     val hasNext by viewModel.hasNext.collectAsStateWithLifecycle()
-    val positionMs by viewModel.positionMs.collectAsStateWithLifecycle()
     val appVolume by viewModel.appVolume.collectAsStateWithLifecycle()
     val repeatMode by viewModel.repeatMode.collectAsStateWithLifecycle()
     val shuffleEnabled by viewModel.shuffleEnabled.collectAsStateWithLifecycle()
@@ -79,6 +82,11 @@ fun LibraryScreen(
 
     var sheetTrackUri by rememberSaveable { mutableStateOf<String?>(null) }
     var showNewFromSheet by rememberSaveable { mutableStateOf(false) }
+    var showNowPlaying by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(nowPlaying) {
+        if (nowPlaying == null) showNowPlaying = false
+    }
 
     val context = LocalContext.current
     var askedNotificationPermission by rememberSaveable { mutableStateOf(false) }
@@ -158,17 +166,11 @@ fun LibraryScreen(
                 isPlaying = isPlaying,
                 hasPrevious = hasPrevious,
                 hasNext = hasNext,
-                positionMs = positionMs,
+                positionMs = viewModel.positionMs,
                 onPrevious = { viewModel.previous() },
                 onPlayPause = { viewModel.togglePlayPause() },
                 onNext = { viewModel.next() },
-                appVolume = appVolume,
-                repeatMode = repeatMode,
-                shuffleEnabled = shuffleEnabled,
-                onVolumeChange = { viewModel.onVolumeChange(it) },
-                onToggleMute = { viewModel.toggleMute() },
-                onCycleRepeat = { viewModel.cycleRepeat() },
-                onToggleShuffle = { viewModel.toggleShuffle() }
+                onExpand = { showNowPlaying = true }
             )
         }
     ) { innerPadding ->
@@ -227,9 +229,13 @@ fun LibraryScreen(
                 Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                     when (selectedTabIndex) {
                         0 -> TracksTab(
-                            tracks = tracks,
+                            tracks = filteredTracks,
                             onTrackClick = onTrackClick,
-                            onTrackLongClick = onTrackLongClick
+                            onTrackLongClick = onTrackLongClick,
+                            searchQuery = searchQuery,
+                            onSearchChange = viewModel::onSearchChange,
+                            currentUri = currentUri,
+                            onTrackMore = onTrackLongClick
                         )
                         1 -> PlaylistsTab(
                             playlists = playlists,
@@ -238,14 +244,17 @@ fun LibraryScreen(
                             onCreate = { viewModel.createPlaylist(it) },
                             onRename = { id, name -> viewModel.renamePlaylist(id, name) },
                             onDelete = { viewModel.deletePlaylist(it) },
-                            onRemoveTrack = { id, uri -> viewModel.removeFromPlaylist(id, uri) }
+                            onRemoveTrack = { id, uri -> viewModel.removeFromPlaylist(id, uri) },
+                            currentUri = currentUri
                         )
                         2 -> FoldersTab(
                             folders = folders,
                             folderLabel = { viewModel.folderLabel(it) },
                             tracksInFolder = { viewModel.tracksInFolder(it) },
                             onTrackClick = onTrackClick,
-                            onTrackLongClick = onTrackLongClick
+                            onTrackLongClick = onTrackLongClick,
+                            currentUri = currentUri,
+                            onTrackMore = onTrackLongClick
                         )
                     }
                 }
@@ -284,5 +293,27 @@ fun LibraryScreen(
                 }
             }
         }
+    }
+
+    nowPlaying?.takeIf { showNowPlaying }?.let { activeTrack ->
+        NowPlayingSheet(
+            nowPlaying = activeTrack,
+            isPlaying = isPlaying,
+            hasPrevious = hasPrevious,
+            hasNext = hasNext,
+            positionMs = viewModel.positionMs,
+            appVolume = appVolume,
+            repeatMode = repeatMode,
+            shuffleEnabled = shuffleEnabled,
+            onSeek = viewModel::seekTo,
+            onPrevious = viewModel::previous,
+            onPlayPause = viewModel::togglePlayPause,
+            onNext = viewModel::next,
+            onVolumeChange = viewModel::onVolumeChange,
+            onToggleMute = viewModel::toggleMute,
+            onCycleRepeat = viewModel::cycleRepeat,
+            onToggleShuffle = viewModel::toggleShuffle,
+            onDismiss = { showNowPlaying = false }
+        )
     }
 }

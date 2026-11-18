@@ -23,7 +23,9 @@ fun volumeCurve(slider: Float): Float = (slider.coerceIn(0f, 1f)).let { it * it 
 data class NowPlaying(
     val title: String,
     val artist: String?,
-    val durationMs: Long
+    val durationMs: Long,
+    val mediaId: String,
+    val album: String?
 )
 
 data class PlaybackIssue(
@@ -122,7 +124,9 @@ class PlayerConnection(context: Context) {
             _nowPlaying.value = NowPlaying(
                 title = metadata.title.toString(),
                 artist = metadata.artist?.toString(),
-                durationMs = dur
+                durationMs = dur,
+                mediaId = item.mediaId,
+                album = metadata.albumTitle?.toString()
             )
         } else {
             _nowPlaying.value = null
@@ -183,6 +187,11 @@ class PlayerConnection(context: Context) {
 
     fun refreshPosition() {
         _positionMs.value = controller?.currentPosition ?: 0L
+    }
+
+    fun seekTo(ms: Long) {
+        controller?.seekTo(ms.coerceAtLeast(0L))
+        refreshPosition()
     }
 
     fun setRepeatMode(mode: Int) {

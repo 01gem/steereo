@@ -40,6 +40,8 @@ fun FoldersTab(
     tracksInFolder: (String) -> Flow<List<TrackEntity>>,
     onTrackClick: (List<TrackEntity>, Int) -> Unit,
     onTrackLongClick: (TrackEntity) -> Unit,
+    currentUri: String?,
+    onTrackMore: (TrackEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedDir by rememberSaveable { mutableStateOf<String?>(null) }
@@ -99,7 +101,9 @@ fun FoldersTab(
                     TrackRow(
                         track = track,
                         onClick = { onTrackClick(folderTracks, index) },
-                        onLongClick = { onTrackLongClick(track) }
+                        onLongClick = { onTrackLongClick(track) },
+                        isCurrent = track.documentUri == currentUri,
+                        onMoreClick = { onTrackMore(track) }
                     )
                     if (index < folderTracks.size - 1) {
                         HorizontalDivider()
