@@ -13,3 +13,28 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Kotlin 2.x session/error logs
+.kotlin/
+
+# IDE: machine-specific
+/.idea/deviceManager.xml
+/.idea/deploymentTargetSelector.xml
+
+# Signing (never commit)
+*.jks
+*.keystore
+keystore.properties
+
+# Release outputs
+/app/release/
+*.apk
+*.aab
+
+# Profiler / logs
+*.hprof
+*.log
+
+# Windows
+Thumbs.db
+desktop.ini
