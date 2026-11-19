@@ -13,12 +13,15 @@ import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
 class SettingsStore(private val context: Context) {
     private object Keys {
         val ROOT_TREE_URI = stringPreferencesKey("root_tree_uri")
         val APP_VOLUME = floatPreferencesKey("app_volume")
         val REPEAT_MODE = intPreferencesKey("repeat_mode")
         val SHUFFLE_ENABLED = booleanPreferencesKey("shuffle_enabled")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
     }
 
     val rootTreeUri: Flow<String?> = context.dataStore.data.map { prefs ->
@@ -35,6 +38,11 @@ class SettingsStore(private val context: Context) {
 
     val shuffleEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[Keys.SHUFFLE_ENABLED] ?: false
+    }
+
+    val themeMode: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
+        val raw = prefs[Keys.THEME_MODE]
+        ThemeMode.entries.firstOrNull { it.name == raw } ?: ThemeMode.SYSTEM
     }
 
     suspend fun setRootTreeUri(uri: String?) {
@@ -62,6 +70,12 @@ class SettingsStore(private val context: Context) {
     suspend fun setShuffleEnabled(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[Keys.SHUFFLE_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setThemeMode(mode: ThemeMode) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.THEME_MODE] = mode.name
         }
     }
 }

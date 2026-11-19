@@ -12,6 +12,7 @@ import com.gem.steereo.SteereoApp
 import com.gem.steereo.data.db.PlaylistEntity
 import com.gem.steereo.data.db.PlaylistWithCount
 import com.gem.steereo.data.db.TrackEntity
+import com.gem.steereo.data.prefs.ThemeMode
 import com.gem.steereo.playback.NowPlaying
 import com.gem.steereo.playback.PlayerConnection
 import com.gem.steereo.playback.PlaybackIssue
@@ -70,6 +71,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val appVolume = MutableStateFlow(1f)
     private var volumeBeforeMute = 1f
     private val volumeSaveFlow = MutableSharedFlow<Float>(extraBufferCapacity = 1)
+
+    /** null = not loaded from DataStore yet (Activity waits to avoid a theme flash). */
+    val themeMode: StateFlow<ThemeMode?> = settings.themeMode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { settings.setThemeMode(mode) }
+    }
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()

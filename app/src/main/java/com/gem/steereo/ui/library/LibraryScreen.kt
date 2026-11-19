@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -25,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -47,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gem.steereo.data.db.TrackEntity
+import com.gem.steereo.data.prefs.ThemeMode
 import com.gem.steereo.ui.MainViewModel
 import com.gem.steereo.ui.player.MiniPlayer
 import com.gem.steereo.ui.player.NowPlayingSheet
@@ -56,6 +59,8 @@ import com.gem.steereo.ui.player.NowPlayingSheet
 fun LibraryScreen(
     viewModel: MainViewModel,
     onChangeFolder: () -> Unit,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tracks by viewModel.tracks.collectAsStateWithLifecycle()
@@ -76,6 +81,7 @@ fun LibraryScreen(
     val shuffleEnabled by viewModel.shuffleEnabled.collectAsStateWithLifecycle()
 
     var showMenu by remember { mutableStateOf(false) }
+    var showThemeMenu by remember { mutableStateOf(false) }
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     val tabs = listOf("Tracks", "Playlists", "Folders")
     val snackbarHostState = remember { SnackbarHostState() }
@@ -134,6 +140,32 @@ fun LibraryScreen(
                     }
                 },
                 actions = {
+                    Box {
+                        IconButton(onClick = { showThemeMenu = true }) {
+                            Icon(Icons.Outlined.DarkMode, contentDescription = "Theme")
+                        }
+                        DropdownMenu(
+                            expanded = showThemeMenu,
+                            onDismissRequest = { showThemeMenu = false }
+                        ) {
+                            listOf(
+                                ThemeMode.SYSTEM to "System default",
+                                ThemeMode.LIGHT to "Light",
+                                ThemeMode.DARK to "Dark"
+                            ).forEach { (mode, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    leadingIcon = {
+                                        RadioButton(selected = themeMode == mode, onClick = null)
+                                    },
+                                    onClick = {
+                                        showThemeMenu = false
+                                        onThemeModeChange(mode)
+                                    }
+                                )
+                            }
+                        }
+                    }
                     IconButton(onClick = { showMenu = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                     }

@@ -1,6 +1,7 @@
 package com.gem.steereo.util
 
 import com.gem.steereo.data.db.TrackEntity
+import com.gem.steereo.data.prefs.ThemeMode
 import com.gem.steereo.ui.MainViewModel.FolderItem
 
 /**
@@ -35,4 +36,11 @@ object PureRules {
             .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.dir })
 
     fun <T> chunkForInClause(items: List<T>): List<List<T>> = items.chunked(SQL_IN_CHUNK_SIZE)
+
+    /** SYSTEM follows the OS; LIGHT/DARK override it. */
+    fun resolveDarkTheme(mode: ThemeMode, systemDark: Boolean): Boolean = when (mode) {
+        ThemeMode.SYSTEM -> systemDark
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
 }
