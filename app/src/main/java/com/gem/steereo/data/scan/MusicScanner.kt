@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
 import com.gem.steereo.data.db.TrackEntity
+import com.gem.steereo.util.PureRules
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,7 +19,6 @@ data class ScanResult(
 class MusicScanner(private val context: Context) {
 
     private companion object {
-        val AUDIO_EXTENSIONS = setOf("mp3", "m4a", "aac", "flac", "ogg", "opus", "wav")
         val PROJECTION = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
             DocumentsContract.Document.COLUMN_DISPLAY_NAME,
@@ -63,11 +63,10 @@ class MusicScanner(private val context: Context) {
 
                     if (mime == DocumentsContract.Document.MIME_TYPE_DIR) {
                         if (name.startsWith(".")) continue
-                        val subDir = if (relativeDir.isEmpty()) name else "$relativeDir/$name"
+                        val subDir = PureRules.childRelativeDir(relativeDir, name)
                         scanDir(docId, subDir)
                     } else {
-                        val ext = name.substringAfterLast('.', "").lowercase()
-                        val isAudio = (mime != null && mime.startsWith("audio/")) || ext in AUDIO_EXTENSIONS
+                        val isAudio = PureRules.isAudioFile(name, mime)
                         if (!isAudio) continue
 
                         val fileUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId).toString()

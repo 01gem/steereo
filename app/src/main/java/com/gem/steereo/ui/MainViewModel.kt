@@ -15,6 +15,7 @@ import com.gem.steereo.data.db.TrackEntity
 import com.gem.steereo.playback.NowPlaying
 import com.gem.steereo.playback.PlayerConnection
 import com.gem.steereo.playback.PlaybackIssue
+import com.gem.steereo.util.PureRules
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -167,9 +168,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         )
 
     val folders: StateFlow<List<FolderItem>> = repository.tracks.map { list ->
-        list.groupBy { it.relativeDir }
-            .map { (dir, items) -> FolderItem(dir, items.size) }
-            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.dir })
+        PureRules.groupIntoFolders(list)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -199,7 +198,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         initialValue = ""
     )
 
-    fun folderLabel(dir: String): String = if (dir.isEmpty()) "/ (root)" else dir.replace("/", " › ")
+    fun folderLabel(dir: String): String = PureRules.folderLabel(dir)
 
     private var currentUriString: String? = null
     private var hasAutoScanned = false

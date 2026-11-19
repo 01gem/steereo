@@ -7,6 +7,7 @@ import com.gem.steereo.data.db.PlaylistWithCount
 import com.gem.steereo.data.db.PlaylistTrackCrossRef
 import com.gem.steereo.data.db.TrackEntity
 import com.gem.steereo.data.scan.MusicScanner
+import com.gem.steereo.util.PureRules
 import kotlinx.coroutines.flow.Flow
 
 data class RescanSummary(
@@ -44,7 +45,7 @@ class MusicRepository(
         }
         val deletedUris = allUris.filter { it !in result.seenUris }
         if (deletedUris.isNotEmpty()) {
-            deletedUris.chunked(500).forEach { chunk ->
+            PureRules.chunkForInClause(deletedUris).forEach { chunk ->
                 db.trackDao().deleteByUris(chunk)
             }
         }
